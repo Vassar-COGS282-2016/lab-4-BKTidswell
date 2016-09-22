@@ -26,7 +26,7 @@ rbinom(number.of.samples, number.of.trials.per.sample, probability.of.success)
 # of course, ESP doesn't exist, so the probability of a successful guess is 0.50.
 # store the result in a vector called esp.data
 
-esp.data <- NA # answer needed here.
+esp.data <- replicate(100, rbinom(1, 20, 0.5))
 
 # a quick way to visualize a distribution is with the hist() function:
 hist(esp.data)
@@ -45,7 +45,7 @@ dbinom(value.to.check, number.of.trials, probability.of.success)
 # questions correctly, if they have a 0.9 probability of giving a correct answer
 # for each individual question.
 
-# answer needed here.
+dbinom(87, 100, 0.9)
 
 # with dbinom, you can use a vector as the first argument, to check the probability
 # of multiple values at the same time:
@@ -58,7 +58,10 @@ dbinom(values, 8, 0.5)
 # hint: create one vector for the different possible outcomes
 #       then use dbinom to calculate the probability of all of the elements in the vector
 
-# answer needed here.
+heads.numbers <- seq(1,16,1)
+proble <- dbinom(flip.numbers, 16, 0.5)
+
+plot(proble)
 
 # quick detour #
 
@@ -80,14 +83,15 @@ hist(hist.sample, xlim=c(0,100)) # compare this plot to the line above.
 # generate 100 samples from a normal distribution with mean 0 and standard deviation 10.
 # then use hist() to create a histogram of these samples.
 
-# answer needed here.
+hist(rnorm(100, 0, 10))
 
 # now plot the probability density function of this distribution.
 # use the same strategy as you did above with the binomial to find the density of the normal
 # distribution with mean 0 and sd 10 for values between -50 and 50. the distribution is continuous
 # so, choose a reasonably small step size between values (remember the seq() function).
 
-# answer needed here.
+probs.numbers <- seq(-50,50,1)
+plot(probs.numbers, dnorm(probs.numbers,0,10))
 
 #### practice calculating likelihoods ####
 
@@ -100,11 +104,20 @@ esp.practice.data <- data.frame(subject=1:10, n.correct=c(11,10,6,10,6,12,10,8,9
 # of the probability of success parameter: 0.4, 0.5, and 0.6.
 # hint: prod() will multiple all elements of a vector together.
 
-# answer needed here.
+p.success <- c(0.4, 0.5, 0.6)
+
+like.4 <- prod(dbinom(esp.practice.data$n.correct, 20, 0.4))
+like.5 <- prod(dbinom(esp.practice.data$n.correct, 20, 0.5))
+like.6 <- prod(dbinom(esp.practice.data$n.correct, 20, 0.6))
+
+like.4
+like.5
+like.6
 
 # which parameter value of those options is most likely?
 
-# answer here.
+#0.5 is the most likely parameter value of the three of them. Though they are all pretty
+#unlikely
 
 # here is a sample of response times for a single subject from a rapid decision making experiment.
 rt.sample <- c(391.5845, 411.9970, 358.6373, 505.3099, 616.2892, 481.0751, 422.3132, 511.7213, 205.2692, 522.3433, 370.1850,
@@ -116,26 +129,32 @@ rt.sample <- c(391.5845, 411.9970, 358.6373, 505.3099, 616.2892, 481.0751, 422.3
 # hint: sum() adds the numbers in a vector. log() is the natural log function, or log=T for dnorm().
 
 # 1) mean 350, sd 50
-# answer needed here.
-
+log.like <- sum(log(dnorm(rt.sample, 350, 50)))
+log.like
+  
 # 2) mean 400, sd 50
-# answer needed here.
+log.like <- sum(log(dnorm(rt.sample, 400, 50)))
+log.like
 
 # 3) mean 450, sd 50
-# answer needed here.
+log.like <- sum(log(dnorm(rt.sample, 450, 50)))
+log.like
 
 # 4) mean 350, sd 100
-# answer needed here.
+log.like <- sum(log(dnorm(rt.sample, 350, 100)))
+log.like
 
 # 5) mean 400, sd 100
-# answer needed here.
+log.like <- sum(log(dnorm(rt.sample, 400, 100)))
+log.like
 
 # 6) mean 450, sd 100
-# answer needed here.
+log.like <- sum(log(dnorm(rt.sample, 450, 100)))
+log.like
 
 # which parameter set has the highest likelihood?
 
-# answer needed here.
+#The parameter with the highest likelihood is mean = 400, sd = 100
 
 # here is a set of data for a subject in a categorization experiment, modeled with GCM.
 # calculate the log likelihood of the parameters in the model (which i am not showing you).
@@ -148,7 +167,20 @@ gcm.practice.data <- data.frame(correct.response = c(T, T, T, T, F, T, T, F, T, 
                                 gcm.probability.correct = c(0.84, 0.80, 0.84, 0.80, 0.79, 0.86, 0.89, 0.87, 0.69, 0.85, 0.75,
                                                             0.74, 0.82, 0.85, 0.87, 0.69, 0.83, 0.87, 0.80, 0.76))
 
-# answer needed here.
+likel <- function(bool, chance){
+  if(bool){
+    return(log(chance))
+  }
+  else{
+    return(log(1 - chance))
+  }
+}
+  
+gcm.practice.data$log.like <- mapply(likel,
+                                     gcm.practice.data$correct.response,
+                                     gcm.practice.data$gcm.probability.correct)
+
+sum(gcm.practice.data$log.like)
 
 #### maximum likelihood estimation ####
 
@@ -163,14 +195,22 @@ same.diff.data <- c(32, 29, 31, 34, 26, 29, 31, 34, 29, 31, 30, 29, 31, 34, 33, 
 # function for values of theta (probability of a correct response) between 0.5 and 0.9, in steps of 0.01.
 # start by writing a function that calculates the likelihood (not log) for the entire set of data given a value of theta.
 
-# answer needed here.
+calc.like <- function(theta){
+  return(prod(dbinom(same.diff.data, 40, theta)))
+}
 
 # then use sapply to run the function for each possible value of theta in the set. use seq() to generate the
 # set of possible values. plot the set of values on the x axis and the corresponding likelihoods on the y axis.
 
-# answer needed here.
+thetas <- seq(0.5, 0.9, 0.01)
+
+prob.trials <- sapply(thetas, calc.like)
+
+plot(thetas,prob.trials)
 
 # the "true" underlying value i used to generate the data was 0.75. does that match up with the grid search?
+
+#yes
 
 ## mle with optim()
 
@@ -183,17 +223,21 @@ same.diff.data <- c(32, 29, 31, 34, 26, 29, 31, 34, 29, 31, 30, 29, 31, 34, 33, 
 # create a vector of x values from 0 to 100, and the corresponding vector of y values,
 # then plot these with x values on the x axis, and y values on the y axis.
 
-# answer needed here.
+x <- seq(0,100,1)
+y <- 4 + 0.8 * x
+
+plot(x,y)
 
 # now let's assume that the relationship between x and y isn't perfect. there's a bit of random
 # noise. add a random sample from a normal distribution with mean 0 and sd 10 to each y value.
 # hint: there are 101 y values, so you need 101 samples.
 
-# answer needed here.
-
 # plot the data again, with the new noisy y values.
 
-# answer needed here.
+y <- 4 + 0.8 * x
+y <- y + rnorm(101,0,10)
+
+plot(x,y)
 
 # there are three parameter values that control this plot,
 # the intercept of the line: 4
@@ -224,26 +268,43 @@ dnorm(y.observed, y.predicted, 10)
 # write the code to see how likely it is that y will be 33 when x is 29? (assuming sd = 10)
 # the correct answer is 0.03371799...
 
-# answer needed here.
+x.observed <- 29
+y.predicted <- 4 + 0.8*x.observed
+y.observed <- 33
+dnorm(y.observed, y.predicted, 10)
 
 # now generalize your solution to compute the likelihood of each value of y that you generated above.
 # in other words, write the code that takes a vector of x and y values, and returns the probability
 # of each pair given that the relationship between x and y is y <- 4 + 0.8*x and the normal distribution has an sd of 10.
 
-# answer needed here.
+x.observed <- x
+y.predicted <- 4 + 0.8*x.observed
+y.observed <- y
+dnorm(y.observed, y.predicted, 10)
 
 # now generalize your solution one step further. write a function that takes in a vector of parameters,
 # where parameters[1] is the intercept, parameters[2] is the slope, and parameters[3] is the sd of the normal,
 # and returns the total **negative log likelihood**. remember, we want the negative log likelihood because
 # optim() will find the set of parameters that minimizes a function.
 
-# answer needed here.
+lin.params <- function(params){
+  inter <- params[1]
+  slope <- params[2]
+  sd <- params[3]
+  
+  x.observed <- x
+  y.predicted <- inter + slope*x.observed
+  y.observed <- y
+  return(-sum(log(dnorm(y.observed, y.predicted, sd))))
+}
 
 # use optim() and Nelder-Mead to search for the best fitting parameters. remember to ensure that sd > 0
 # and return NA if it is not.
 
-# answer needed here.
+optim.result <- optim(c(1, 1, 1), lin.params, method = "Nelder-Mead")
+optim.result$par
+optim.result$val
 
 # finally, plot the best fitting line on your points by using the abline() function, and the parameters that optim() found.
 
-# answer needed here.
+abline(optim.result$par[1],optim.result$par[2])
